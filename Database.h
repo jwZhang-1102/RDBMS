@@ -6,13 +6,13 @@
 #include <string.h>
 #include <stdbool.h>
 
-// ¶¨Òå¸÷ÖÖ×î´ó³¤¶ÈÏŞÖÆ
-#define MAX_NAME_LEN 50       // Ãû³Æ×î´ó³¤¶È
-#define MAX_FIELDS 20         // Ã¿¸ö±í×î´ó×Ö¶ÎÊı
-#define MAX_TABLES 10         // Êı¾İ¿â×î´ó±íÊı
-#define MAX_CONSTRAINTS 10    // Ã¿¸ö×Ö¶Î×î´óÔ¼ÊøÊı
+// å®šä¹‰å„ç§æœ€å¤§é•¿åº¦é™åˆ¶
+#define MAX_NAME_LEN 50       // åç§°æœ€å¤§é•¿åº¦
+#define MAX_FIELDS 20         // æ¯ä¸ªè¡¨æœ€å¤§å­—æ®µæ•°
+#define MAX_TABLES 10         // æ•°æ®åº“æœ€å¤§è¡¨æ•°
+#define MAX_CONSTRAINTS 10    // æ¯ä¸ªå­—æ®µæœ€å¤§çº¦æŸæ•°
 
-// ×Ö¶ÎÀàĞÍÃ¶¾Ù£¬¶¨ÒåÖ§³ÖµÄ×Ö¶ÎÊı¾İÀàĞÍ
+// å­—æ®µç±»å‹æšä¸¾ï¼Œå®šä¹‰æ”¯æŒçš„å­—æ®µæ•°æ®ç±»å‹
 typedef enum {
     INT_TYPE,
     FLOAT_TYPE,
@@ -20,61 +20,61 @@ typedef enum {
     BOOL_TYPE
 } FieldType;
 
-// Ô¼ÊøÀàĞÍÃ¶¾Ù£¬¶¨ÒåÖ§³ÖµÄÔ¼ÊøÀàĞÍ
+// çº¦æŸç±»å‹æšä¸¾ï¼Œå®šä¹‰æ”¯æŒçš„çº¦æŸç±»å‹
 typedef enum {
-    NOT_NULL,     // ·Ç¿ÕÔ¼Êø
-    UNIQUE,       // Î¨Ò»Ô¼Êø
-    DEFAULT,      // Ä¬ÈÏÖµÔ¼Êø
-    CHECK,        // ¼ì²éÔ¼Êø
-    FOREIGN_KEY   // Íâ¼üÔ¼Êø
+    NOT_NULL,     // éç©ºçº¦æŸ
+    UNIQUE,       // å”¯ä¸€çº¦æŸ
+    DEFAULT,      // é»˜è®¤å€¼çº¦æŸ
+    CHECK,        // æ£€æŸ¥çº¦æŸ
+    FOREIGN_KEY   // å¤–é”®çº¦æŸ
 } ConstraintType;
 
-// Ô¼ÊøÌõ¼ş½á¹¹Ìå
+// çº¦æŸæ¡ä»¶ç»“æ„ä½“
 typedef struct {
-    ConstraintType type;      // Ô¼ÊøÀàĞÍ
-    char name[MAX_NAME_LEN];  // Ô¼ÊøÃû³Æ
+    ConstraintType type;      // çº¦æŸç±»å‹
+    char name[MAX_NAME_LEN];  // çº¦æŸåç§°
 
-    // ÁªºÏÌå£¬ÓÃÓÚ´æ´¢²»Í¬ÀàĞÍµÄÄ¬ÈÏÖµ(½öDEFAULTÔ¼ÊøÊ¹ÓÃ)
+    // è”åˆä½“ï¼Œç”¨äºå­˜å‚¨ä¸åŒç±»å‹çš„é»˜è®¤å€¼(ä»…DEFAULTçº¦æŸä½¿ç”¨)
     union {
-        int intValue;        // ÕûĞÍÄ¬ÈÏÖµ
-        float floatValue;     // ¸¡µãĞÍÄ¬ÈÏÖµ
-        char stringValue[MAX_NAME_LEN]; // ×Ö·û´®Ä¬ÈÏÖµ
-        bool boolValue;       // ²¼¶ûĞÍÄ¬ÈÏÖµ
+        int intValue;        // æ•´å‹é»˜è®¤å€¼
+        float floatValue;     // æµ®ç‚¹å‹é»˜è®¤å€¼
+        char stringValue[MAX_NAME_LEN]; // å­—ç¬¦ä¸²é»˜è®¤å€¼
+        bool boolValue;       // å¸ƒå°”å‹é»˜è®¤å€¼
     } defaultValue;
 
-    // Íâ¼üÔ¼Êø×¨ÓÃ×Ö¶Î
-    char refTable[MAX_NAME_LEN];   // ÒıÓÃ±íÃû
-    char refField[MAX_NAME_LEN];   // ÒıÓÃ×Ö¶ÎÃû
+    // å¤–é”®çº¦æŸä¸“ç”¨å­—æ®µ
+    char refTable[MAX_NAME_LEN];   // å¼•ç”¨è¡¨å
+    char refField[MAX_NAME_LEN];   // å¼•ç”¨å­—æ®µå
 
-    // ¼ì²éÔ¼Êø×¨ÓÃ×Ö¶Î
-    char checkCondition[MAX_NAME_LEN * 2]; // ¼ì²éÌõ¼ş±í´ïÊ½
+    // æ£€æŸ¥çº¦æŸä¸“ç”¨å­—æ®µ
+    char checkCondition[MAX_NAME_LEN * 2]; // æ£€æŸ¥æ¡ä»¶è¡¨è¾¾å¼
 } Constraint;
 
-// ×Ö¶Î½á¹¹Ìå
+// å­—æ®µç»“æ„ä½“
 typedef struct {
-    char name[MAX_NAME_LEN];       // ×Ö¶ÎÃû³Æ
-    FieldType type;                // ×Ö¶ÎÀàĞÍ
-    bool isPrimaryKey;             // ÊÇ·ñÖ÷¼ü
-    int length;                    // ×Ö¶Î³¤¶È(Ö÷ÒªÓÃÓÚ×Ö·û´®ÀàĞÍ)
+    char name[MAX_NAME_LEN];       // å­—æ®µåç§°
+    FieldType type;                // å­—æ®µç±»å‹
+    bool isPrimaryKey;             // æ˜¯å¦ä¸»é”®
+    int length;                    // å­—æ®µé•¿åº¦(ä¸»è¦ç”¨äºå­—ç¬¦ä¸²ç±»å‹)
 
-    Constraint constraints[MAX_CONSTRAINTS]; // ×Ö¶ÎÔ¼ÊøÊı×é
-    int constraintCount;           // µ±Ç°Ô¼ÊøÊıÁ¿
+    Constraint constraints[MAX_CONSTRAINTS]; // å­—æ®µçº¦æŸæ•°ç»„
+    int constraintCount;           // å½“å‰çº¦æŸæ•°é‡
 } Field;
 
-// ±í½á¹¹Ìå
+// è¡¨ç»“æ„ä½“
 typedef struct {
-    char name[MAX_NAME_LEN];       // ±íÃû³Æ
-    Field fields[MAX_FIELDS];      // ×Ö¶ÎÊı×é
-    int fieldCount;                // µ±Ç°×Ö¶ÎÊıÁ¿
+    char name[MAX_NAME_LEN];       // è¡¨åç§°
+    Field fields[MAX_FIELDS];      // å­—æ®µæ•°ç»„
+    int fieldCount;                // å½“å‰å­—æ®µæ•°é‡
 } Table;
 
-// Êı¾İ¿â½á¹¹Ìå
+// æ•°æ®åº“ç»“æ„ä½“
 typedef struct {
-    Table tables[MAX_TABLES];      // ±íÊı×é
-    int tableCount;                // µ±Ç°±íÊıÁ¿
+    Table tables[MAX_TABLES];      // è¡¨æ•°ç»„
+    int tableCount;                // å½“å‰è¡¨æ•°é‡
 } Database;
 
-// º¯ÊıÉùÃ÷
+// å‡½æ•°å£°æ˜
 Table* findTable(Database* db, const char* tableName);
 const char* constraintToString(const Constraint* constraint);
 bool addConstraint(Field* field, ConstraintType type, const char* name,
@@ -83,7 +83,7 @@ bool deleteConstraint(Field* field, const char* name);
 bool validateForeignKey(Database* db, const char* tableName, const char* fieldName,
     const char* refTableName, const char* refFieldName);
 bool addField(Table* table, const char* name, FieldType type, bool isPrimaryKey, int length);
-bool deleteField(Table* table, const char* fieldName);
+bool deleteField(Database* db, Table* table, const char* fieldName);
 bool modifyField(Table* table, const char* fieldName, FieldType newType, bool newIsPrimaryKey, int newLength);
 void printTableStructure(const Table* table);
 
