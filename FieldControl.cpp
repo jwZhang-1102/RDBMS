@@ -1,10 +1,10 @@
 #include "database.h"
 
 /**
- * ¸ù¾İ±íÃû²éÕÒ±í
- * @param db Êı¾İ¿âÖ¸Õë
- * @param tableName Òª²éÕÒµÄ±íÃû
- * @return ÕÒµ½·µ»Ø±íÖ¸Õë£¬·ñÔò·µ»ØNULL
+ * æ ¹æ®è¡¨åæŸ¥æ‰¾è¡¨
+ * @param db æ•°æ®åº“æŒ‡é’ˆ
+ * @param tableName è¦æŸ¥æ‰¾çš„è¡¨å
+ * @return æ‰¾åˆ°è¿”å›è¡¨æŒ‡é’ˆï¼Œå¦åˆ™è¿”å›NULL
  */
 Table* findTable(Database* db, const char* tableName) {
     for (int i = 0; i < db->tableCount; i++) {
@@ -16,22 +16,22 @@ Table* findTable(Database* db, const char* tableName) {
 }
 
 /**
- * Ïò±íÌí¼Ó×Ö¶Î
- * @param table ±íÖ¸Õë
- * @param name ×Ö¶ÎÃû
- * @param type ×Ö¶ÎÀàĞÍ
- * @param isPrimaryKey ÊÇ·ñÖ÷¼ü
- * @param length ×Ö¶Î³¤¶È(×Ö·û´®ÀàĞÍÊ¹ÓÃ)
- * @return ³É¹¦·µ»Øtrue£¬Ê§°Ü·µ»Øfalse
+ * å‘è¡¨æ·»åŠ å­—æ®µ
+ * @param table è¡¨æŒ‡é’ˆ
+ * @param name å­—æ®µå
+ * @param type å­—æ®µç±»å‹
+ * @param isPrimaryKey æ˜¯å¦ä¸»é”®
+ * @param length å­—æ®µé•¿åº¦(å­—ç¬¦ä¸²ç±»å‹ä½¿ç”¨)
+ * @return æˆåŠŸè¿”å›trueï¼Œå¤±è´¥è¿”å›false
  */
 bool addField(Table* table, const char* name, FieldType type, bool isPrimaryKey, int length) {
-    // ¼ì²é×Ö¶ÎÊıÁ¿ÏŞÖÆ
+    // æ£€æŸ¥å­—æ®µæ•°é‡é™åˆ¶
     if (table->fieldCount >= MAX_FIELDS) {
         printf("Error: Maximum number of fields reached for table %s\n", table->name);
         return false;
     }
 
-    // ¼ì²é×Ö¶ÎÃûÊÇ·ñÒÑ´æÔÚ
+    // æ£€æŸ¥å­—æ®µåæ˜¯å¦å·²å­˜åœ¨
     for (int i = 0; i < table->fieldCount; i++) {
         if (strcmp(table->fields[i].name, name) == 0) {
             printf("Error: Field name '%s' already exists in table %s\n", name, table->name);
@@ -39,7 +39,7 @@ bool addField(Table* table, const char* name, FieldType type, bool isPrimaryKey,
         }
     }
 
-    // ³õÊ¼»¯ĞÂ×Ö¶Î
+    // åˆå§‹åŒ–æ–°å­—æ®µ
     Field* newField = &table->fields[table->fieldCount];
     strncpy_s(newField->name, name, MAX_NAME_LEN);
     newField->type = type;
@@ -52,15 +52,15 @@ bool addField(Table* table, const char* name, FieldType type, bool isPrimaryKey,
     return true;
 }
 /**
- * É¾³ı±íÖĞµÄ×Ö¶Î
- * @param table ±íÖ¸Õë
- * @param fieldName ÒªÉ¾³ıµÄ×Ö¶ÎÃû
- * @return ³É¹¦·µ»Øtrue£¬Ê§°Ü·µ»Øfalse
+ * åˆ é™¤è¡¨ä¸­çš„å­—æ®µ
+ * @param table è¡¨æŒ‡é’ˆ
+ * @param fieldName è¦åˆ é™¤çš„å­—æ®µå
+ * @return æˆåŠŸè¿”å›trueï¼Œå¤±è´¥è¿”å›false
  */
-bool deleteField(Table* table, const char* fieldName) {
+bool deleteField(Database* db, Table* table, const char* fieldName) {
     int index = -1;
 
-    // ²éÕÒ×Ö¶ÎÎ»ÖÃ
+    // æŸ¥æ‰¾å­—æ®µä½ç½®
     for (int i = 0; i < table->fieldCount; i++) {
         if (strcmp(table->fields[i].name, fieldName) == 0) {
             index = i;
@@ -73,7 +73,25 @@ bool deleteField(Table* table, const char* fieldName) {
         return false;
     }
 
-    // É¾³ı×Ö¶Î£¬Í¨¹ı¸²¸ÇºóĞø×Ö¶ÎÊµÏÖ
+    // æ£€æŸ¥æ˜¯å¦è¢«å…¶ä»–è¡¨å¤–é”®å¼•ç”¨
+    for (int t = 0; t < db->tableCount; t++) {
+        Table* otherTable = &db->tables[t];
+        for (int f = 0; f < otherTable->fieldCount; f++) {
+            Field* otherField = &otherTable->fields[f];
+            for (int c = 0; c < otherField->constraintCount; c++) {
+                Constraint* con = &otherField->constraints[c];
+                if (con->type == FOREIGN_KEY &&
+                    strcmp(con->refTable, table->name) == 0 &&
+                    strcmp(con->refField, fieldName) == 0) {
+                    printf("Error: Cannot delete field '%s' in table '%s' â€” it is referenced by FOREIGN_KEY '%s' in table '%s', field '%s'\n",
+                        fieldName, table->name, con->name, otherTable->name, otherField->name);
+                    return false;
+                }
+            }
+        }
+    }
+
+    // åˆ é™¤å­—æ®µï¼Œé€šè¿‡è¦†ç›–åç»­å­—æ®µå®ç°
     for (int i = index; i < table->fieldCount - 1; i++) {
         table->fields[i] = table->fields[i + 1];
     }
@@ -83,14 +101,15 @@ bool deleteField(Table* table, const char* fieldName) {
     return true;
 }
 
+
 /**
- * ĞŞ¸Ä±íÖĞµÄ×Ö¶ÎÊôĞÔ
- * @param table ±íÖ¸Õë
- * @param fieldName ÒªĞŞ¸ÄµÄ×Ö¶ÎÃû
- * @param newType ĞÂµÄÊı¾İÀàĞÍ
- * @param newIsPrimaryKey ÊÇ·ñÎªÖ÷¼ü
- * @param newLength ĞÂ³¤¶È(½ö¶Ô×Ö·û´®ÀàĞÍÓĞĞ§)
- * @return ³É¹¦·µ»Øtrue£¬Ê§°Ü·µ»Øfalse
+ * ä¿®æ”¹è¡¨ä¸­çš„å­—æ®µå±æ€§
+ * @param table è¡¨æŒ‡é’ˆ
+ * @param fieldName è¦ä¿®æ”¹çš„å­—æ®µå
+ * @param newType æ–°çš„æ•°æ®ç±»å‹
+ * @param newIsPrimaryKey æ˜¯å¦ä¸ºä¸»é”®
+ * @param newLength æ–°é•¿åº¦(ä»…å¯¹å­—ç¬¦ä¸²ç±»å‹æœ‰æ•ˆ)
+ * @return æˆåŠŸè¿”å›trueï¼Œå¤±è´¥è¿”å›false
  */
 bool modifyField(Table* table, const char* fieldName, FieldType newType, bool newIsPrimaryKey, int newLength) {
     Field* field = NULL;
@@ -107,7 +126,34 @@ bool modifyField(Table* table, const char* fieldName, FieldType newType, bool ne
         return false;
     }
 
-    // ĞŞ¸Ä×Ö¶ÎÊôĞÔ
+    // æ£€æŸ¥ç°æœ‰å…³è”çº¦æŸ
+    for (int i = 0; i < field->constraintCount; i++) {
+        Constraint* c = &field->constraints[i];
+        if (c->type == FOREIGN_KEY) {
+            printf("Warning: Field type change may invalidate FOREIGN_KEY constraint '%s'\n", c->name);
+        }
+        if (c->type == DEFAULT) {
+            // æ£€æŸ¥é»˜è®¤å€¼ç±»å‹æ˜¯å¦åŒ¹é…
+            switch (newType) {
+            case INT_TYPE:
+                // åˆæ³•ï¼ŒintValue
+                break;
+            case FLOAT_TYPE:
+                break;
+            case STRING_TYPE:
+                break;
+            case BOOL_TYPE:
+                break;
+            default:
+                printf("Warning: Unknown type in DEFAULT constraint '%s'\n", c->name);
+            }
+        }
+        if (c->type == CHECK) {
+            printf("Warning: Field type change may invalidate CHECK constraint '%s'\n", c->name);
+        }
+    }
+
+    // ä¿®æ”¹å­—æ®µå±æ€§
     field->type = newType;
     field->isPrimaryKey = newIsPrimaryKey;
     field->length = newLength;
