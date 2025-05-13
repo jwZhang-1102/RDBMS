@@ -45,7 +45,7 @@ QString SqlParser::parseUseDatabase(const QString& sql) {
     QRegularExpression regex(
         "USE\\s+DATABASE\\s+(\\w+)",
         QRegularExpression::CaseInsensitiveOption
-    );
+        );
 
     QRegularExpressionMatch match = regex.match(sql);
     if (!match.hasMatch()) {
@@ -59,7 +59,7 @@ QString SqlParser::parseDropDatabase(const QString& sql) {
     QRegularExpression regex(
         "DROP\\s+DATABASE\\s+(\\w+)",
         QRegularExpression::CaseInsensitiveOption
-    );
+        );
 
     QRegularExpressionMatch match = regex.match(sql);
     if (!match.hasMatch()) {
@@ -73,7 +73,7 @@ QString SqlParser::parseDropTable(const QString& sql) {
     QRegularExpression regex(
         "DROP\\s+TABLE\\s+(\\w+)",
         QRegularExpression::CaseInsensitiveOption
-    );
+        );
 
     QRegularExpressionMatch match = regex.match(sql);
     if (!match.hasMatch()) {

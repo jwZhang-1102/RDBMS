@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     dbCombo = nullptr;
     useDbBtn = nullptr;
     setupUI();
-    loadExistingDatabases(); // 新增初始化加载
+    loadExistingDatabases(); // 初始化加载
 }
 
 void MainWindow::setupUI() {
@@ -106,7 +106,7 @@ void MainWindow::executeSql() {
                 StorageEngine::createDatabase(dbName); // 库的内存
                 databases[dbName] = new Database(dbName); // 数据库新对象
 
-               // 更新下拉列表并自动选中
+                // 更新下拉列表并自动选中
                 dbCombo->addItem(dbName);
                 dbCombo->setCurrentText(dbName);
                 currentDB = dbName; // 自动切换到新数据库
