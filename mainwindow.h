@@ -2,35 +2,38 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTextEdit>
-#include <QTableView>
-#include <QComboBox>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QMessageBox>
-#include <QStandardItemModel>
-#include <QListWidget>
+#include <QSplitter>
+
+class QTextEdit;
+class QTableView;
+class QPushButton;
+class QLabel;
+class DBClient;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    MainWindow(QWidget* parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
 
 private slots:
-    void executeSql();
-    void switchDatabase();
-    void loadExistingDatabases();
-    void refreshTableList();
+    void executeQuery();
+    void showConnectionDialog();
+    void handleQueryResult(const QJsonDocument& result);
+    void handleError(const QString& error);
+    void updateConnectionStatus(bool connected);
 
 private:
-    QTextEdit* sqlEditor;
-    QTableView* resultView;
-    QComboBox* dbCombo;
-    QPushButton* useDbBtn;
-    QString currentDB;
-    QListWidget* tableList;
     void setupUI();
+    void setupConnections();
+
+    // UI Components
+    QTextEdit* m_sqlEditor;
+    QTableView* m_resultView;
+    QPushButton* m_executeBtn;
+    QLabel* m_statusLabel;
+
+    // Core
+    DBClient* m_dbClient;
 };
 
 #endif // MAINWINDOW_H
