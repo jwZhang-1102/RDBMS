@@ -1,0 +1,17 @@
+release/Constraint.o
+release/FieldControl.o
+release/database.o
+release/dml_processor.o
+release/logui.o
+release/main.o
+release/mainwindow.o
+release/sqlparser.o
+release/storage.o
+release/storageengine.o
+release/table.o
+release/table_meta.o
+release/widget.o
+release/moc_logui.o
+release/moc_mainwindow.o
+release/moc_table.o
+release/moc_widget.o

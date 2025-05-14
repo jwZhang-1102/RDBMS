@@ -1,0 +1,17 @@
+debug/Constraint.o
+debug/FieldControl.o
+debug/database.o
+debug/dml_processor.o
+debug/logui.o
+debug/main.o
+debug/mainwindow.o
+debug/sqlparser.o
+debug/storage.o
+debug/storageengine.o
+debug/table.o
+debug/table_meta.o
+debug/widget.o
+debug/moc_logui.o
+debug/moc_mainwindow.o
+debug/moc_table.o
+debug/moc_widget.o
