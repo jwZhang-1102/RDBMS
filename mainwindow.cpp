@@ -17,6 +17,8 @@
 #include <QJsonDocument>
 #include <QDateTime>
 #include <QRegularExpression>
+#include "sqlparser.h"
+#include "exceptions.h"
 
 mainwindow::mainwindow(const QString &username, QWidget *parent)
     : QWidget(parent), userName(username)  // 初始化user成员
@@ -604,12 +606,12 @@ void mainwindow::insertIntoTable(QString dbName, QString tableName, QStringList 
 
     QFile tableFile(tableFilePath);
     if (!tableFile.exists()) {
-        qDebug() << "The table file does not exist:" << tableFilePath;
+        qDebug() << "表文件不存在:" << tableFilePath;
         return;
     }
 
     if (!tableFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Unable to open the table file:" << tableFilePath;
+        qDebug() << "无法打开表文件:" << tableFilePath;
         return;
     }
 
@@ -618,48 +620,40 @@ void mainwindow::insertIntoTable(QString dbName, QString tableName, QStringList 
 
     QJsonDocument doc = QJsonDocument::fromJson(jsonData);
     if (doc.isNull()) {
-        qDebug() << "Invalid JSON format:" << tableFilePath;
+        qDebug() << "无效的JSON格式:" << tableFilePath;
         return;
     }
 
     QJsonObject tableObj = doc.object();
+
     QJsonArray attributesArray = tableObj["attributes"].toArray();
     QJsonArray dataArray = tableObj["data"].toArray();
 
     if (tuples.size() != attributesArray.size()) {
-        qDebug() << "The number of inserted data does not match the number of table attributes";
+        qDebug() << "插入的数据数量与表属性数量不匹配";
         return;
-    }
-
-    QStringList attributeNames;
-    for (const QJsonValue& attr : attributesArray) {
-        QString attrStr = attr.toString();
-        QString fieldName = attrStr.split(' ').first();
-        attributeNames.append(fieldName);
     }
 
     QJsonObject newRow;
-    for (int i = 0; i < attributeNames.size(); ++i) {
-        newRow[attributeNames[i]] = tuples[i];
+    for (int i = 0; i < attributesArray.size(); ++i) {
+        QString attr = attributesArray[i].toString();
+        newRow[attr] = tuples[i];
     }
 
     dataArray.append(newRow);
+
     tableObj["data"] = dataArray;
 
-    if (!tableFile.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
-        qDebug() << "The table file cannot be opened for writing:" << tableFilePath;
-        return;
+    if (tableFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&tableFile);
+        QJsonDocument newDoc(tableObj);
+        out << newDoc.toJson();
+        tableFile.close();
+        qDebug() << "成功插入数据到表:" << tableName;
+    } else {
+        qDebug() << "无法写入表文件:" << tableFilePath;
     }
-
-    QTextStream out(&tableFile);
-    QJsonDocument newDoc(tableObj);
-    out << newDoc.toJson();
-    tableFile.close();
-
-    qDebug() << "Successfully inserted data into the table:" << tableName;
 }
-
-
 
 void mainwindow::showTable(QString dbName, QString tableName)
 {
@@ -982,6 +976,91 @@ void mainwindow::processDDL()
 
         setupInLeftWidget(leftWidget);
     }
+    //索引管理新增
+    else if (lowerCommand.startsWith("create index")) {
+        try {
+            // 确保使用 SqlParser 类的 parseCreateIndex 方法
+            CreateIndexStatement stmt = SqlParser::parseCreateIndex(command); // [修正]
+
+            if (dataBase.isEmpty()) {
+                dialogEdit->append("ERROR: No database selected.");
+            } else {
+                QString dbName = dataBase;
+                QString indexName = stmt.indexName;
+                QString tableName = stmt.tableName;
+                QString fieldName = stmt.fieldName;
+
+                if (!userDatabases.contains(dbName)) {
+                    userDatabases[dbName] = new QDatabase(dbName); // 若尚未创建对象
+                }
+
+                QDatabase* db = userDatabases[dbName];
+                if (!db->hasTable(tableName)) {
+                    dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
+                } else {
+                    bool success = db->createIndex(tableName, indexName, fieldName);
+                    if (success) {
+                        dialogEdit->append("Query OK, index created.");
+                    } else {
+                        dialogEdit->append("ERROR: Index already exists.");
+                    }
+                }
+            }
+        } catch (const SqlException& ex) {
+            dialogEdit->append("SQL ERROR: " + QString::fromStdString(ex.what()));
+        }
+
+        QTextCursor cursor = dialogEdit->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        dialogEdit->setTextCursor(cursor);
+        dialogEdit->append("mysql<");
+        return;
+    }
+    else if (lowerCommand.startsWith("drop index")) {
+        try {
+            // 解析 DROP INDEX 语句
+            QStringList parts = command.split(' ', Qt::SkipEmptyParts);
+            if (parts.size() < 4 || parts[2].toLower() != "on") {
+                dialogEdit->append("ERROR: Invalid DROP INDEX syntax");
+                return;
+            }
+
+            QString indexName = parts[1];
+            QString tableName = parts[3];
+
+            if (dataBase.isEmpty()) {
+                dialogEdit->append("ERROR: No database selected.");
+            } else {
+                QString dbName = dataBase;
+
+                if (!userDatabases.contains(dbName)) {
+                    dialogEdit->append("ERROR: Database '" + dbName + "' does not exist.");
+                } else {
+                    QDatabase* db = userDatabases[dbName];
+                    if (!db->hasTable(tableName)) {
+                        dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
+                    } else {
+                        bool success = db->dropIndex(tableName, indexName); // 调用删除索引方法
+                        if (success) {
+                            dialogEdit->append("Query OK, index dropped.");
+                        } else {
+                            dialogEdit->append("ERROR: Index does not exist.");
+                        }
+                    }
+                }
+            }
+        } catch (const SqlException& ex) {
+            dialogEdit->append("SQL ERROR: " + QString::fromStdString(ex.what()));
+        }
+
+        QTextCursor cursor = dialogEdit->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        dialogEdit->setTextCursor(cursor);
+        dialogEdit->append("mysql<");
+        return;
+    }
+
+
     //插入数据
     else if (lowerCommand.startsWith("insert into")) {
         //解析INSERT INTO语句

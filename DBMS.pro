@@ -11,11 +11,11 @@ CONFIG += c++17
 SOURCES += \
     Constraint.cpp \
     FieldControl.cpp \
-    database.cpp \
     dml_processor.cpp \
     logui.cpp \
     main.cpp \
     mainwindow.cpp \
+    qdatabase.cpp \
     sqlparser.cpp \
     storage.cpp \
     storageengine.cpp \
@@ -24,9 +24,9 @@ SOURCES += \
     widget.cpp
 
 HEADERS += \
-    Database1.h \
+    Database.h \
+    QDatabase.h \
     common.h \
-    database.h \
     dml_processor.h \
     exceptions.h \
     logui.h \
@@ -51,6 +51,5 @@ DISTFILES += \
     CMakeLists.txt \
     CMakeLists.txt.user \
     DBMS.pro.user \
-    DBMS.pro.user.dc71b4a \
     README.md \
     user.txt

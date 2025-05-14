@@ -61,11 +61,22 @@ typedef struct {
     int constraintCount;           // 当前约束数量
 } Field;
 
+//新增：索引结构体
+typedef struct {
+    char name[MAX_NAME_LEN];       // 索引名称
+    char fieldName[MAX_NAME_LEN];  // 索引字段名称
+    char fileName[MAX_NAME_LEN];   // 索引文件名
+    //IndexType type;             // 索引类型 (例如, B+树, 哈希等)  // 如果只支持B+树可以省略
+} Index;
+
 // 表结构体
 typedef struct {
     char name[MAX_NAME_LEN];       // 表名称
     Field fields[MAX_FIELDS];      // 字段数组
     int fieldCount;                // 当前字段数量
+    //新增
+    Index indices[MAX_CONSTRAINTS]; // 索引数组 (和约束共用大小，简化处理)
+    int indexCount;                // 当前索引数量
 } Table;
 
 // 数据库结构体

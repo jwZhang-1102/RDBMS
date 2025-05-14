@@ -1,4 +1,5 @@
 #include "dml_processor.h"
+#include <algorithm>
 
 dml_processor::dml_processor(storage& engine,
     const std::unordered_map<std::string, TableMeta>& tables_meta)

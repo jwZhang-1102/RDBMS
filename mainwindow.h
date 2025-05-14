@@ -8,6 +8,7 @@
 #include <QMenuBar>
 #include <QTreeWidgetItem>
 #include <QKeyEvent>
+#include "QDatabase.h"
 
 class mainwindow : public QWidget
 {
@@ -54,6 +55,7 @@ private:
     QStringList columnNames = {"ID", "Name", "Salary", "DOB","Position"};
 
     QPushButton *refreshButton;
+    QMap<QString, QDatabase*> userDatabases; // [索引功能新增] 用户数据库集合
 };
 
 #endif // MAINWINDOW_H
