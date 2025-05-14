@@ -47,62 +47,34 @@ LogUI::~LogUI()
 {
 }
 
-void LogUI::onLoginButtonClicked()
-{
+void LogUI::onLoginButtonClicked() {
     QString inputUsername = username->text().trimmed();
     QString inputPassword = password->text().trimmed();
 
-    if(inputUsername.isEmpty() || inputPassword.isEmpty()) {
+    if (inputUsername.isEmpty() || inputPassword.isEmpty()) {
         QMessageBox::warning(this, "警告", "账号和密码不能为空!");
         return;
     }
 
-    QFile file("D:\\数据库实训\\DBMS\\user.txt");
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "警告", "用户数据库打开失败!");
-        return;
-    }
-
-    QTextStream in(&file);
-    bool userFound = false;
-
-    while(!in.atEnd()) {
-        QString line = in.readLine();
-        QStringList parts = line.split(":");
-        if(parts.size() == 2) {
-            QString storedUsername = parts[0];
-            QString storedPassword = parts[1];
-
-            if(storedUsername == inputUsername && storedPassword == inputPassword) {
-                userFound = true;
-                break;
-            }
-        }
-    }
-
-    file.close();
-
-    if(userFound) {
+    if (SecurityManager::instance().authenticate(inputUsername, inputPassword)) {
         this->close();
         mainwindow *win = new mainwindow(inputUsername);
         win->show();
-
     } else {
         QMessageBox::warning(this, "警告", "用户名或密码错误!");
     }
 }
 
-void LogUI::onLogupButtonClicked()
-{
+void LogUI::onLogupButtonClicked() {
     QString inputUsername = username->text().trimmed();
     QString inputPassword = password->text().trimmed();
 
-    if(inputUsername.isEmpty() || inputPassword.isEmpty()) {
+    if (inputUsername.isEmpty() || inputPassword.isEmpty()) {
         QMessageBox::warning(this, "警告", "账号和密码不能为空!");
         return;
     }
 
-    if(inputUsername.contains('\\') || inputUsername.contains('/') ||
+    if (inputUsername.contains('\\') || inputUsername.contains('/') ||
         inputUsername.contains(':') || inputUsername.contains('*') ||
         inputUsername.contains('?') || inputUsername.contains('"') ||
         inputUsername.contains('<') || inputUsername.contains('>') ||
@@ -111,52 +83,31 @@ void LogUI::onLogupButtonClicked()
         return;
     }
 
-    QFile checkFile("D:\\数据库实训\\DBMS\\user.txt");
-    if(checkFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QTextStream in(&checkFile);
-        while(!in.atEnd()) {
-            QString line = in.readLine();
-            QStringList parts = line.split(":");
-            if(parts.size() > 0 && parts[0] == inputUsername) {
-                QMessageBox::warning(this, "警告", "用户名已存在!");
-                checkFile.close();
+    if (SecurityManager::instance().registerUser(inputUsername, inputPassword)) {
+        QString userFolderPath = "D:\\数据库实训\\DBMS\\Users\\" + inputUsername + ".u";
+        QDir userFolder;
+
+        if (!userFolder.exists(userFolderPath)) {
+            if (!userFolder.mkpath(userFolderPath)) {
+                QMessageBox::warning(this, "警告", QString("无法创建用户文件夹: %1").arg(userFolderPath));
                 return;
             }
         }
-        checkFile.close();
-    }
 
-    QFile userFile("D:\\数据库实训\\DBMS\\user.txt");
-    if(!userFile.open(QIODevice::Append | QIODevice::Text)) {
-        QMessageBox::warning(this, "警告", "无法打开用户数据库!");
-        return;
-    }
+        QString dbFolderPath = userFolderPath + "\\ruanko.db";
+        QDir dbFolder;
 
-    QTextStream out(&userFile);
-    out << inputUsername << ":" << inputPassword << "\n";
-    userFile.close();
-
-    QString userFolderPath = "D:\\数据库实训\\DBMS\\Users\\" + inputUsername + ".u";
-    QDir userFolder;
-
-    if(!userFolder.exists(userFolderPath)) {
-        if(!userFolder.mkpath(userFolderPath)) {
-            QMessageBox::warning(this, "警告", QString("无法创建用户文件夹: %1").arg(userFolderPath));
-            return;
+        if (!dbFolder.exists(dbFolderPath)) {
+            if (!dbFolder.mkpath(dbFolderPath)) {
+                QMessageBox::warning(this, "警告", QString("无法创建数据库文件夹: %1").arg(dbFolderPath));
+                return;
+            }
         }
-    }
 
-    QString dbFolderPath = userFolderPath + "\\ruanko.db";
-    QDir dbFolder;
-
-    if(!dbFolder.exists(dbFolderPath)) {
-        if(!dbFolder.mkpath(dbFolderPath)) {
-            QMessageBox::warning(this, "警告", QString("无法创建数据库文件夹: %1").arg(dbFolderPath));
-            return;
-        }
-        QMessageBox::information(this, "成功", QString("注册成功！已创建用户文件夹和数据库文件夹。\n路径: %1").arg(dbFolderPath));
+        QMessageBox::information(this, "成功",
+                                 QString("注册成功！已创建用户文件夹和数据库文件夹。\n路径: %1").arg(dbFolderPath));
     } else {
-        QMessageBox::warning(this, "警告", QString("数据库文件夹已存在: %1").arg(dbFolderPath));
+        QMessageBox::warning(this, "警告", "用户名已存在!");
     }
 }
 

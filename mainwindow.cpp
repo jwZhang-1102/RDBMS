@@ -19,18 +19,17 @@
 #include <QRegularExpression>
 
 mainwindow::mainwindow(const QString &username, QWidget *parent)
-    : QWidget(parent), userName(username)  // 初始化user成员
+    : QWidget(parent), userName(username),
+    securityManager(SecurityManager::instance())
 {
     setWindowTitle("My DBMS(1.0)");
     setFixedSize(1100, 700);
 
     QGridLayout *layout = new QGridLayout(this);
-
     QMenuBar *menuBar = new QMenuBar(this);
 
-// 文件菜单
+    // 文件菜单
     QMenu *fileMenu = menuBar->addMenu("文件");
-
     QAction *newProjectAction = new QAction("新建项目...", this);
     QAction *newConnectionAction = new QAction("新建连接...", this);
     QAction *openByMyDBMSAction = new QAction("使用MyDBMS打开...", this);
@@ -41,30 +40,9 @@ mainwindow::mainwindow(const QString &username, QWidget *parent)
     QAction *closeTabAction = new QAction("关闭选项卡", this);
     QAction *exitMyDBMSAction = new QAction("退出MyDBMS", this);
 
-    QMenu *newMenu = new QMenu("新建", this);
-    QAction *newAction1 = new QAction("新建文件", this);
-    QAction *newAction2 = new QAction("新建文件夹", this);
-    newMenu->addAction(newAction1);
-    newMenu->addAction(newAction2);
-
-    QMenu *openExternalFileMenu = new QMenu("打开外部文件", this);
-    QAction *newAction3 = new QAction("查询...", this);
-    QAction *newAction4 = new QAction("模型工作区...", this);
-    QAction *newAction5 = new QAction("BI 工作区", this);
-    openExternalFileMenu->addAction(newAction3);
-    openExternalFileMenu->addAction(newAction4);
-    openExternalFileMenu->addAction(newAction5);
-
-    QMenu *openRecentlyUsedMenu = new QMenu("打开最近使用过的", this);
-    QAction *newAction6 = new QAction("打开表-recentlyUsed", this);
-    openRecentlyUsedMenu->addAction(newAction6);
-
     fileMenu->addAction(newProjectAction);
     fileMenu->addAction(newConnectionAction);
-    fileMenu->addMenu(newMenu);
     fileMenu->addAction(openByMyDBMSAction);
-    fileMenu->addMenu(openExternalFileMenu);
-    fileMenu->addMenu(openRecentlyUsedMenu);
     fileMenu->addAction(importConnectionAction);
     fileMenu->addAction(derivedConnectionAction);
     fileMenu->addAction(managementAction);
@@ -72,117 +50,11 @@ mainwindow::mainwindow(const QString &username, QWidget *parent)
     fileMenu->addAction(closeTabAction);
     fileMenu->addAction(exitMyDBMSAction);
 
-//编辑菜单
-    QMenu *editMenu = menuBar->addMenu("编辑");
-
-    QAction *copyAction = new QAction("复制  Ctrl + C", this);
-    QAction *pasteAction = new QAction("粘贴  Ctrl + V", this);
-    QAction *allAction = new QAction("全选  Ctrl + A", this);
-
-    editMenu->addAction(copyAction);
-    editMenu->addAction(pasteAction);
-    editMenu->addAction(allAction);
-
-//查看菜单
-    QMenu *checkMenu = menuBar->addMenu("查看");
-
-    QMenu *navigationPaneMenu = checkMenu->addMenu("导航窗格");
-    QAction *newAction7 = new QAction("显示导航窗格", this);
-    QAction *newAction8 = new QAction("隐藏连接组", this);
-    QAction *newAction9 = new QAction("仅显示活跃对象  F12", this);
-    QAction *newAction10 = new QAction("在顶部显示筛选", this);
-    navigationPaneMenu->addAction(newAction7);
-    navigationPaneMenu->addAction(newAction8);
-    navigationPaneMenu->addAction(newAction9);
-    navigationPaneMenu->addAction(newAction10);
-    QMenu *informationPaneMenu = checkMenu->addMenu("信息窗格");
-    QAction *newAction11 = new QAction("显示信息窗格", this);
-    QAction *newAction12 = new QAction("常规", this);
-    informationPaneMenu->addAction(newAction11);
-    informationPaneMenu->addAction(newAction12);
-    QAction *listAction = new QAction("列表", this);
-    QAction *detailedInformationAction = new QAction("详细信息", this);
-    QAction *erDiagramAction = new QAction("ER 图表", this);
-    QAction *hiddenControlGroupAction = new QAction("隐藏对照组", this);
-    checkMenu->addAction(listAction);
-    checkMenu->addAction(detailedInformationAction);
-    checkMenu->addAction(erDiagramAction);
-    checkMenu->addAction(hiddenControlGroupAction );
-    QMenu *sortMenu = checkMenu->addMenu("排序");
-    QAction *nameAction = new QAction("名称", this);
-    QAction *groupAction = new QAction("组", this);
-    QAction *autoincrementAction = new QAction("自动递增值", this);
-    QAction *rowFormatAction = new QAction("行格式", this);
-    QAction *dataChangedAction = new QAction("修改日期", this);
-    QAction *dataCreatedAction = new QAction("创建日期", this);
-    QAction *indexLengthAction = new QAction("索引长度", this);
-    QAction *dataLengthAction = new QAction("数据长度", this);
-    sortMenu->addAction(nameAction);
-    sortMenu->addAction(groupAction);
-    sortMenu->addAction(autoincrementAction);
-    sortMenu->addAction(rowFormatAction);
-    sortMenu->addAction(dataChangedAction);
-    sortMenu->addAction(dataCreatedAction);
-    sortMenu->addAction(indexLengthAction);
-    sortMenu->addAction(dataLengthAction);
-    QAction *choseListAction = new QAction("选择列", this);
-    QAction *showHiddenItemsAction = new QAction("显示隐藏的项目", this);
-    QAction *showTableConfigurationFileAction = new QAction("显示表配置文件", this);
-    checkMenu->addAction(choseListAction);
-    checkMenu->addAction(showHiddenItemsAction);
-    checkMenu->addAction(showTableConfigurationFileAction);
-//收藏菜单
-    QMenu *favoriteMenu = menuBar->addMenu("收藏");
-    QAction *addToFavoriteAction = new QAction("添加到收藏夹", this);
-    QAction *favorite1Action = new QAction("空的  Ctrl + 1", this);
-    favoriteMenu->addAction(addToFavoriteAction);
-    favoriteMenu->addAction(favorite1Action);
-
-//工具菜单
-    QMenu *toolMenu = menuBar->addMenu("工具");
-    QAction *dataTransmissionAction = new QAction("数据传输...", this);
-    QAction *dataGenerationAction = new QAction("数据生成...", this);
-    QAction *dataDictionaryAction = new QAction("数据字典...", this);
-    QAction *dataSynchronismAction = new QAction("数据同步...", this);
-    QAction *structureSynchronismAction = new QAction("结构同步...", this);
-    QAction *commandLineInterfaceAction = new QAction("命令列界面...", this);
-    toolMenu->addAction(dataTransmissionAction);
-    toolMenu->addAction(dataGenerationAction);
-    toolMenu->addAction(dataDictionaryAction);
-    toolMenu->addAction(dataSynchronismAction);
-    toolMenu->addAction(structureSynchronismAction);
-    toolMenu->addAction(commandLineInterfaceAction);
-    QMenu *serverMonitoringMenu = toolMenu->addMenu("服务器监控");
-    QAction *newAction13 = new QAction("MySQL", this);
-    QAction *newAction14 = new QAction("SQL Server", this);
-    QAction *newAction15 = new QAction("Oracle", this);
-    serverMonitoringMenu->addAction(newAction13);
-    serverMonitoringMenu->addAction(newAction14);
-    serverMonitoringMenu->addAction(newAction15);
-    QAction *searchInDatabaseOrSchemaAction = new QAction("在数据库或模式中查找...", this);
-    QAction *historyLogAction = new QAction("历史日志...  Ctrl + L", this);
-    QAction *optionAction = new QAction("选项...", this);
-    toolMenu->addAction(searchInDatabaseOrSchemaAction);
-    toolMenu->addAction(historyLogAction);
-    toolMenu->addAction(optionAction);
-
-//窗口菜单
-    QMenu *windowMenu = menuBar->addMenu("窗口");
-    QAction *MyDBMSAction = new QAction("MyDBMS  F8", this);
-    QAction *nextWindowAction = new QAction("下一个窗口  Ctrl + Tab", this);
-    windowMenu->addAction(MyDBMSAction);
-    windowMenu->addAction(nextWindowAction);
-
-//帮助菜单
-    QMenu *helpMenu = menuBar->addMenu("帮助");
-    QAction * MyDBMSHelpAction = new QAction("MyDBMS 帮助  F1", this);
-    helpMenu->addAction(MyDBMSHelpAction);
-    QMenu *onlineDocumentMenu = helpMenu->addMenu("在线文档");
-    onlineDocumentMenu->addAction(newAction13);
-    onlineDocumentMenu->addAction(newAction14);
-    onlineDocumentMenu->addAction(newAction15);
-    QAction * aboutAction = new QAction("关于...", this);
-    helpMenu->addAction(aboutAction);
+    // 安全菜单
+    QMenu *securityMenu = menuBar->addMenu("安全");
+    QAction *managePermissionsAction = new QAction("权限管理", this);
+    connect(managePermissionsAction, &QAction::triggered, this, &mainwindow::showPermissionManager);
+    securityMenu->addAction(managePermissionsAction);
 
     layout->setMenuBar(menuBar);
 
@@ -201,7 +73,6 @@ mainwindow::mainwindow(const QString &username, QWidget *parent)
     leftWidget = new QWidget();
     rightWidget = new QWidget();
 
-
     horizontalSplitter->addWidget(leftWidget);
     horizontalSplitter->addWidget(rightWidget);
     horizontalSplitter->setSizes({100,500});
@@ -212,9 +83,7 @@ mainwindow::mainwindow(const QString &username, QWidget *parent)
     midWidget->setLayout(midLayout);
 
     QVBoxLayout *downLayout = new QVBoxLayout();
-
     QTextEdit *dialogEdit = new QTextEdit();
-
     dialogEdit->setText("mysql<");
 
     QTextCursor cursor = dialogEdit->textCursor();
@@ -232,25 +101,176 @@ mainwindow::mainwindow(const QString &username, QWidget *parent)
 
     setupInLeftWidget(leftWidget);
     setupInRightWidget(rightWidget);
-
-
+    setupPermissionDialog();
 }
 
 mainwindow::~mainwindow()
 {
-
 }
 
-void mainwindow::setupInLeftWidget(QWidget *leftWidget)
-{
-    QVBoxLayout *leftLayout = new QVBoxLayout(leftWidget);
+void mainwindow::setupPermissionDialog() {
+    permissionDialog = new QDialog(this);
+    permissionDialog->setWindowTitle("权限管理");
+    permissionDialog->setMinimumSize(400, 500);
 
+    QVBoxLayout* layout = new QVBoxLayout(permissionDialog);
+
+    // 数据库选择
+    QComboBox* dbComboBox = new QComboBox(permissionDialog);
+    for (const QString& db : databases) {
+        dbComboBox->addItem(db);
+    }
+    connect(dbComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this, dbComboBox](int index) {
+        currentSelectedDb = dbComboBox->itemText(index);
+        updatePermissionList();
+    });
+
+    // 用户列表
+    userListWidget = new QListWidget(permissionDialog);
+    userListWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    connect(userListWidget, &QListWidget::itemSelectionChanged, [this]() {
+        updatePermissionList();
+    });
+
+    // 权限列表
+    permissionListWidget = new QListWidget(permissionDialog);
+    permissionListWidget->setSelectionMode(QAbstractItemView::MultiSelection);
+
+    // 按钮
+    grantButton = new QPushButton("授予权限", permissionDialog);
+    revokeButton = new QPushButton("撤销权限", permissionDialog);
+
+    connect(grantButton, &QPushButton::clicked, [this]() {
+        if (userListWidget->currentItem() && !currentSelectedDb.isEmpty()) {
+            QString selectedUser = userListWidget->currentItem()->text();
+            for (QListWidgetItem* item : permissionListWidget->selectedItems()) {
+                securityManager.grantPermission(userName, selectedUser, currentSelectedDb,
+                                                static_cast<Permission>(item->data(Qt::UserRole).toInt()));
+            }
+            updatePermissionList();
+        }
+    });
+
+    connect(revokeButton, &QPushButton::clicked, [this]() {
+        if (userListWidget->currentItem() && !currentSelectedDb.isEmpty()) {
+            QString selectedUser = userListWidget->currentItem()->text();
+            for (QListWidgetItem* item : permissionListWidget->selectedItems()) {
+                securityManager.revokePermission(userName, selectedUser, currentSelectedDb,
+                                                 static_cast<Permission>(item->data(Qt::UserRole).toInt()));
+            }
+            updatePermissionList();
+        }
+    });
+
+    databases.clear();
+    QDir dbDir("D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db");
+    QStringList dbFolders = dbDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString &dbFolder : dbFolders) {
+        if (dbFolder.endsWith(".db")) {
+            databases.append(dbFolder.left(dbFolder.length() - 3));
+        }
+    };
+    dbComboBox->clear();
+    for (const QString& db : databases) {
+        dbComboBox->addItem(db);
+    }
+
+    // 布局
+    layout->addWidget(new QLabel("选择数据库:"));
+    layout->addWidget(dbComboBox);
+    layout->addWidget(new QLabel("用户列表:"));
+    layout->addWidget(userListWidget);
+    layout->addWidget(new QLabel("权限列表:"));
+    layout->addWidget(permissionListWidget);
+
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    buttonLayout->addWidget(grantButton);
+    buttonLayout->addWidget(revokeButton);
+    layout->addLayout(buttonLayout);
+}
+
+void mainwindow::showPermissionManager() {
+    // 加载用户列表
+    userListWidget->clear();
+    QFile userFile("D:\\数据库实训\\DBMS\\user.txt");
+    if (userFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream in(&userFile);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QString username = line.split(":").first();
+            if (username != userName) { // 不显示当前用户自己
+                userListWidget->addItem(username);
+            }
+        }
+        userFile.close();
+    }
+
+    if (!databases.isEmpty()) {
+        currentSelectedDb = databases.first();
+    }
+
+    updatePermissionList();
+    permissionDialog->exec();
+}
+
+void mainwindow::updatePermissionList() {
+    permissionListWidget->clear();
+
+    if (currentSelectedDb.isEmpty() || !securityManager.isDbOwner(userName, currentSelectedDb)) {
+        permissionListWidget->setEnabled(false);
+        grantButton->setEnabled(false);
+        revokeButton->setEnabled(false);
+        return;
+    }
+
+    permissionListWidget->setEnabled(true);
+    grantButton->setEnabled(true);
+    revokeButton->setEnabled(true);
+
+    // 添加所有权限项
+    QList<QPair<QString, Permission>> permissions = {
+        {"删除数据库", Permission::DROP_DB},
+        {"创建表", Permission::CREATE_TABLE},
+        {"删除表", Permission::DROP_TABLE},
+        {"修改表结构", Permission::ALTER_TABLE},
+        {"插入数据", Permission::INSERT_DATA},
+        {"查询数据", Permission::SELECT_DATA},
+        {"更新数据", Permission::UPDATE_DATA},
+        {"删除数据", Permission::DELETE_DATA},
+        {"查看数据库", Permission::VIEW_DB},
+         {"使用数据库", Permission::USE_DB}
+    };
+
+    for (const auto& perm : permissions) {
+        QListWidgetItem* item = new QListWidgetItem(perm.first);
+        item->setData(Qt::UserRole, static_cast<int>(perm.second));
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Unchecked);
+        permissionListWidget->addItem(item);
+    }
+
+    // 标记已授予的权限
+    if (userListWidget->currentItem()) {
+        QString selectedUser = userListWidget->currentItem()->text();
+        for (int i = 0; i < permissionListWidget->count(); ++i) {
+            QListWidgetItem* item = permissionListWidget->item(i);
+            Permission perm = static_cast<Permission>(item->data(Qt::UserRole).toInt());
+            if (securityManager.hasPermission(selectedUser, currentSelectedDb, perm)) {
+                item->setCheckState(Qt::Checked);
+            } else {
+                item->setCheckState(Qt::Unchecked);
+            }
+        }
+    }
+}
+
+
+void mainwindow::setupInLeftWidget(QWidget *leftWidget) {
+    QVBoxLayout *leftLayout = new QVBoxLayout(leftWidget);
     QTreeWidget *treeWidget = new QTreeWidget(leftWidget);
     treeWidget->setHeaderHidden(true);
-
     treeWidget->setIndentation(15);
     treeWidget->setAnimated(true);
-
     connect(treeWidget, &QTreeWidget::itemClicked, this, &mainwindow::onTreeItemClicked);
 
     QTreeWidgetItem *dbRootItem = new QTreeWidgetItem(treeWidget);
@@ -258,32 +278,34 @@ void mainwindow::setupInLeftWidget(QWidget *leftWidget)
     dbRootItem->setIcon(0, QIcon(":/icons/database.png"));
     dbRootItem->setExpanded(true);
 
-    QDir rootDir("D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db");
-    QStringList dbFolders = rootDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    // 获取所有数据库
+    QList<QString> allDatabases = securityManager.getAllDatabases();
 
-    foreach (const QString &dbFolder, dbFolders) {
-        if (dbFolder.endsWith(".db")) {
-            QString dbName = dbFolder.left(dbFolder.length() - 3);
+    foreach (const QString &dbName, allDatabases) {
+        // 检查是否有查看权限才显示数据库
+        if (securityManager.hasPermission(userName, dbName, Permission::VIEW_DB)) {
             QTreeWidgetItem *dbItem = new QTreeWidgetItem(dbRootItem);
             dbItem->setText(0, dbName);
             dbItem->setIcon(0, QIcon(":/icons/database.png"));
 
-            QDir tableDir(rootDir.path() + "\\" + dbFolder);
-            QStringList tableFiles = tableDir.entryList(QStringList() << "*.table", QDir::Files);
+            // 检查是否有查看权限才显示表
+            if (securityManager.hasPermission(userName, dbName, Permission::VIEW_DB)) {
+                QString dbPath = "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db\\" + dbName + ".db";
+                QDir tableDir(dbPath);
+                QStringList tableFiles = tableDir.entryList(QStringList() << "*.table", QDir::Files);
 
-            foreach (const QString &tableFile, tableFiles) {
-                QString tableName = tableFile.left(tableFile.length() - 6);
-                QTreeWidgetItem *tableItem = new QTreeWidgetItem(dbItem);
-                tableItem->setText(0, tableName);
-                tableItem->setIcon(0, QIcon(":/icons/table.png"));
+                foreach (const QString &tableFile, tableFiles) {
+                    QString tableName = tableFile.left(tableFile.length() - 6);
+                    QTreeWidgetItem *tableItem = new QTreeWidgetItem(dbItem);
+                    tableItem->setText(0, tableName);
+                    tableItem->setIcon(0, QIcon(":/icons/table.png"));
+                }
             }
         }
     }
 
     leftLayout->addWidget(treeWidget);
     leftWidget->setLayout(leftLayout);
-    qDebug() << "Current user:" << userName;
-    qDebug() << "Loading from:" << "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db";
 }
 
 void mainwindow::createDataBase(QString dbName)
@@ -297,6 +319,7 @@ void mainwindow::createDataBase(QString dbName)
     if (!dbSubDir.exists()) {
         if (dbSubDir.mkpath(".")) {
             databases.append(dbName);
+            securityManager.setDbOwner(dbName, userName); // 设置数据库所有者
             qDebug() << "成功创建数据库目录:" << dbName;
         } else {
             qDebug() << "无法创建数据库目录:" << dbName;
@@ -340,6 +363,10 @@ void mainwindow::createEmptyTable(QString dbName, QString tableName)
 
 void mainwindow::createTable(QString dbName, QString tableName, QStringList attributes)
 {
+    if (!securityManager.hasPermission(userName, dbName, Permission::CREATE_TABLE)) {
+        QMessageBox::warning(this, "权限不足", "您没有创建表的权限");
+        return;
+    }
     // 首先确保数据库存在
     createDataBase(dbName);
 
@@ -600,6 +627,10 @@ void mainwindow::deleteAttribute(QString dbName, QString tableName, QString attr
 
 void mainwindow::insertIntoTable(QString dbName, QString tableName, QStringList tuples)
 {
+    if (!securityManager.hasPermission(userName, dbName, Permission::CREATE_TABLE)) {
+        QMessageBox::warning(this, "权限不足", "您没有权限");
+        return;
+    }
     QString tableFilePath = "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db\\" + dbName + ".db\\" + tableName + ".table";
 
     QFile tableFile(tableFilePath);
@@ -728,6 +759,10 @@ void mainwindow::showTable(QString dbName, QString tableName)
 
 void mainwindow::dropDataBase(QString dbName)
 {
+    if (!securityManager.isDbOwner(userName, dbName)) {
+        QMessageBox::warning(this, "权限不足", "只有数据库所有者可以删除数据库");
+        return;
+    }
     QString dbPath = "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db\\" + dbName + ".db";
     QDir dbDir(dbPath);
 
@@ -796,27 +831,23 @@ void mainwindow::processDDL()
     if(lowerCommand.startsWith("use")) {
         QString dbName = command.mid(3).trimmed();
         if (!dbName.isEmpty()) {
-            QString dbPath = "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db\\" + dbName + ".db";
-
-            QFile dbFile(dbPath);
-            if (dbFile.exists()) {
-                useDatabase(dbName);
-                dialogEdit->append("Database changed");
-            } else {
+            // 检查数据库是否存在
+            if (!securityManager.getAllDatabases().contains(dbName)) {
                 dialogEdit->append("ERROR: Database '" + dbName + "' does not exist");
+            } else {
+                useDatabase(dbName);
+                if (dataBase == dbName) { // 只有权限检查通过才会设置dataBase
+                    dialogEdit->append("Database changed");
+                }
             }
-
-            QTextCursor cursor = dialogEdit->textCursor();
-            cursor.movePosition(QTextCursor::End);
-            dialogEdit->setTextCursor(cursor);
-            dialogEdit->append("mysql<");
         } else {
             dialogEdit->append("ERROR: Database name cannot be empty");
-            QTextCursor cursor = dialogEdit->textCursor();
-            cursor.movePosition(QTextCursor::End);
-            dialogEdit->setTextCursor(cursor);
-            dialogEdit->append("mysql<");
         }
+
+        QTextCursor cursor = dialogEdit->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        dialogEdit->setTextCursor(cursor);
+        dialogEdit->append("mysql<");
         return;
     }
     // 检查是否已选择数据库
@@ -1044,6 +1075,11 @@ void mainwindow::processDDL()
 
 void mainwindow::useDatabase(QString database)
 {
+    // 检查是否有USE权限
+    if (!securityManager.hasPermission(userName, database, Permission::USE_DB)) {
+        QMessageBox::warning(this, "权限不足", "您没有使用此数据库的权限");
+        return;
+    }
     dataBase = database;
 }
 
@@ -1075,10 +1111,15 @@ void mainwindow::onTextChanged()
 void mainwindow::onTreeItemClicked(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(column);
-
     if (item->parent() && item->parent()->parent()) {
         QString dbName = item->parent()->text(0);
         QString tableName = item->text(0);
+
+        // 检查是否有查看权限
+        if (!securityManager.hasPermission(userName, dbName, Permission::VIEW_DB)) {
+            QMessageBox::warning(this, "权限不足", "您没有查看此数据库的权限");
+            return;
+        }
 
         showTable(dbName, tableName);
     }

@@ -5,6 +5,7 @@ release/dml_processor.o
 release/logui.o
 release/main.o
 release/mainwindow.o
+release/security.o
 release/sqlparser.o
 release/storage.o
 release/storageengine.o

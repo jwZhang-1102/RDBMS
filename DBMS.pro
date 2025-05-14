@@ -16,6 +16,7 @@ SOURCES += \
     logui.cpp \
     main.cpp \
     mainwindow.cpp \
+    security.cpp \
     sqlparser.cpp \
     storage.cpp \
     storageengine.cpp \
@@ -31,6 +32,7 @@ HEADERS += \
     exceptions.h \
     logui.h \
     mainwindow.h \
+    security.h \
     sqlparser.h \
     storage.h \
     storageengine.h \
