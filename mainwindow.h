@@ -56,6 +56,7 @@ private:
 
     QPushButton *refreshButton;
     QMap<QString, QDatabase*> userDatabases; // [索引功能新增] 用户数据库集合
+    QString currentDatabaseName;
 };
 
 #endif // MAINWINDOW_H

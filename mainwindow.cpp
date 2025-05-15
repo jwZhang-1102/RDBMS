@@ -345,6 +345,14 @@ void mainwindow::createTable(QString dbName, QString tableName, QStringList attr
     // 首先确保数据库存在
     createDataBase(dbName);
 
+    QDatabase* db;
+    if (!userDatabases.contains(dbName)) {
+        db = new QDatabase(dbName);  // 如果数据库对象不存在，创建它
+        userDatabases[dbName] = db;  // 将新数据库添加到 userDatabases 中
+    } else {
+        db = userDatabases[dbName];  // 获取已存在的数据库对象
+    }
+
     QString tableFilePath = "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db\\" + dbName + ".db\\" + tableName + ".table";
     QFile tableFile(tableFilePath);
 
@@ -359,10 +367,17 @@ void mainwindow::createTable(QString dbName, QString tableName, QStringList attr
             tableInfo["createTime"] = QDateTime::currentDateTime().toString(Qt::ISODate);
 
             QJsonArray attributesArray;
+            QList<QPair<QString, QString>> columns;  // 用来存储列名和类型的键值对
+
+            // 假设属性格式为 "列名 类型"，将其转换为 QPair
             for (const QString &attr : attributes) {
-                attributesArray.append(attr);
+                QStringList parts = attr.split(' ', Qt::SkipEmptyParts);  // 修改为 Qt::SkipEmptyParts
+                if (parts.size() == 2) {
+                    columns.append(QPair<QString, QString>(parts[0], parts[1]));  // 生成列名和类型的键值对
+                }
             }
-            tableInfo["attributes"] = attributesArray;
+
+            tableInfo["attributes"] = QJsonArray();
 
             tableInfo["data"] = QJsonArray();
 
@@ -370,13 +385,21 @@ void mainwindow::createTable(QString dbName, QString tableName, QStringList attr
             out << doc.toJson();
 
             tableFile.close();
-            tables.append(tableName);
+
+            // 确保数据库对象存在
+            db->addTable(tableName, new Table(tableName, columns));  // 将表添加到数据库
             qDebug() << "成功创建表:" << tableName << "，包含属性:" << attributes;
+
+            qDebug() << "createTable - 当前数据库实例地址：" << db;
+            qDebug() << "createTable - 数据库中表：" << db->tableNames();
+
         } else {
             qDebug() << "无法创建表文件:" << tableName;
         }
     }
 }
+
+
 
 void mainwindow::setupInRightWidget(QWidget *rightWidget)
 {
@@ -786,7 +809,7 @@ void mainwindow::processDDL()
 
     // 解析SQL命令
     // 选择数据库
-    if(lowerCommand.startsWith("use")) {
+    if (lowerCommand.startsWith("use")) {
         QString dbName = command.mid(3).trimmed();
         if (!dbName.isEmpty()) {
             QString dbPath = "D:\\数据库实训\\DBMS\\Users\\" + userName + ".u\\ruanko.db\\" + dbName + ".db";
@@ -939,8 +962,7 @@ void mainwindow::processDDL()
             attributes.append(columnDef);
             insertAttribute(dataBase, tableName, attributes);
             dialogEdit->append("Query OK, 0 rows affected");
-        }
-        else if (operation == "modify") {
+        } else if (operation == "modify") {
             if (parts.size() < 4 || parts[2].toLower() != "column") {
                 dialogEdit->append("ERROR: Invalid MODIFY COLUMN syntax");
                 QTextCursor cursor = dialogEdit->textCursor();
@@ -952,8 +974,7 @@ void mainwindow::processDDL()
             QString newColumnDef = parts.mid(3).join(" ");
             alterAttribute(dataBase, tableName, newColumnDef);
             dialogEdit->append("Query OK, 0 rows affected");
-        }
-        else if (operation == "drop") {
+        } else if (operation == "drop") {
             if (parts.size() < 4 || parts[2].toLower() != "column") {
                 dialogEdit->append("ERROR: Invalid DROP COLUMN syntax");
                 QTextCursor cursor = dialogEdit->textCursor();
@@ -965,8 +986,7 @@ void mainwindow::processDDL()
             QString columnName = parts[3];
             deleteAttribute(dataBase, tableName, columnName);
             dialogEdit->append("Query OK, 0 rows affected");
-        }
-        else {
+        } else {
             dialogEdit->append("ERROR: Unsupported ALTER TABLE operation");
             QTextCursor cursor = dialogEdit->textCursor();
             cursor.movePosition(QTextCursor::End);
@@ -978,34 +998,59 @@ void mainwindow::processDDL()
     }
     //索引管理新增
     else if (lowerCommand.startsWith("create index")) {
-        try {
-            // 确保使用 SqlParser 类的 parseCreateIndex 方法
-            CreateIndexStatement stmt = SqlParser::parseCreateIndex(command); // [修正]
+        qDebug() << "CREATE INDEX命令被检测到";  // [调试] 打印调试信息
 
+        try {
+            qDebug() << "输入的 SQL 语句：" << command;  // 打印输入的 SQL 语句
+            CreateIndexStatement stmt = SqlParser::parseCreateIndex(command);  // 解析 CREATE INDEX
+
+            qDebug() << "解析结果：" << stmt.indexName << stmt.tableName << stmt.fieldName;  // 打印解析结果
+
+            // 确保数据库已选择
             if (dataBase.isEmpty()) {
                 dialogEdit->append("ERROR: No database selected.");
-            } else {
-                QString dbName = dataBase;
-                QString indexName = stmt.indexName;
-                QString tableName = stmt.tableName;
-                QString fieldName = stmt.fieldName;
-
-                if (!userDatabases.contains(dbName)) {
-                    userDatabases[dbName] = new QDatabase(dbName); // 若尚未创建对象
-                }
-
-                QDatabase* db = userDatabases[dbName];
-                if (!db->hasTable(tableName)) {
-                    dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
-                } else {
-                    bool success = db->createIndex(tableName, indexName, fieldName);
-                    if (success) {
-                        dialogEdit->append("Query OK, index created.");
-                    } else {
-                        dialogEdit->append("ERROR: Index already exists.");
-                    }
-                }
+                QTextCursor cursor = dialogEdit->textCursor();
+                cursor.movePosition(QTextCursor::End);
+                dialogEdit->setTextCursor(cursor);
+                dialogEdit->append("mysql<");
+                return;
             }
+
+            QString dbName = dataBase;
+            QString indexName = stmt.indexName;
+            QString tableName = stmt.tableName;
+            QString fieldName = stmt.fieldName;
+
+            // 确保数据库对象存在
+            if (!userDatabases.contains(dbName)) {
+                userDatabases[dbName] = new QDatabase(dbName);  // 若尚未创建数据库对象
+            }
+
+            QDatabase* db = userDatabases[dbName];
+            qDebug() << "createIndex - 当前数据库实例地址：" << db;
+            qDebug() << "createIndex - 数据库中表：" << db->tableNames();
+
+            // 打印数据库中的表名，确认是否有目标表
+            qDebug() << "数据库中的所有表：" << db->tableNames();  // [调试] 打印数据库中的所有表名
+
+            // 检查表是否存在
+            if (!db->hasTable(tableName)) {
+                dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
+                QTextCursor cursor = dialogEdit->textCursor();
+                cursor.movePosition(QTextCursor::End);
+                dialogEdit->setTextCursor(cursor);
+                dialogEdit->append("mysql<");
+                return;
+            }
+
+            // 创建索引
+            bool success = db->createIndex(tableName, indexName, fieldName);
+            if (success) {
+                dialogEdit->append("Query OK, index created.");
+            } else {
+                dialogEdit->append("ERROR: Index '" + indexName + "' already exists.");
+            }
+
         } catch (const SqlException& ex) {
             dialogEdit->append("SQL ERROR: " + QString::fromStdString(ex.what()));
         }
@@ -1016,41 +1061,109 @@ void mainwindow::processDDL()
         dialogEdit->append("mysql<");
         return;
     }
+
+
     else if (lowerCommand.startsWith("drop index")) {
+        qDebug() << "DROP INDEX语句被检测到";  // [调试]
+
         try {
+            qDebug() << "lowerCommand内容是：" << lowerCommand;
             // 解析 DROP INDEX 语句
             QStringList parts = command.split(' ', Qt::SkipEmptyParts);
-            if (parts.size() < 4 || parts[2].toLower() != "on") {
+            qDebug() << "DROP INDEX 分词结果：" << parts;
+
+            // ===== [修复1] 正确判断语法结构为 DROP INDEX index_name ON table_name
+            if (parts.size() < 5 || parts[3].toLower() != "on") {
                 dialogEdit->append("ERROR: Invalid DROP INDEX syntax");
+                QTextCursor cursor = dialogEdit->textCursor();
+                cursor.movePosition(QTextCursor::End);
+                dialogEdit->setTextCursor(cursor);
+                dialogEdit->append("mysql<");
                 return;
             }
 
-            QString indexName = parts[1];
-            QString tableName = parts[3];
+            QString indexName = parts[2];     // [修复1] 正确获取索引名
+            QString tableName = parts[4];     // [修复1] 正确获取表名
 
+            // ===== 检查是否选中数据库
+            if (dataBase.isEmpty()) {
+                dialogEdit->append("ERROR: No database selected.");
+                QTextCursor cursor = dialogEdit->textCursor();
+                cursor.movePosition(QTextCursor::End);
+                dialogEdit->setTextCursor(cursor);
+                dialogEdit->append("mysql<");
+                return;
+            }
+
+            QString dbName = dataBase;
+
+            // ===== [修复2] 自动加载数据库对象（如果未构造）
+            if (!userDatabases.contains(dbName)) {
+                userDatabases[dbName] = new QDatabase(dbName);
+                qDebug() << "数据库对象自动加载：" << dbName;
+            }
+
+            QDatabase* db = userDatabases[dbName];
+
+            // ===== 检查表是否存在
+            if (!db->hasTable(tableName)) {
+                dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
+                QTextCursor cursor = dialogEdit->textCursor();
+                cursor.movePosition(QTextCursor::End);
+                dialogEdit->setTextCursor(cursor);
+                dialogEdit->append("mysql<");
+                return;
+            }
+
+            // ===== 删除索引
+            bool success = db->dropIndex(tableName, indexName);
+            if (success) {
+                dialogEdit->append("Query OK, index dropped.");
+            } else {
+                dialogEdit->append("ERROR: Index '" + indexName + "' does not exist.");
+            }
+
+        } catch (const SqlException& ex) {
+            dialogEdit->append("SQL ERROR: " + QString::fromStdString(ex.what()));
+        }
+
+        QTextCursor cursor = dialogEdit->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        dialogEdit->setTextCursor(cursor);
+        dialogEdit->append("mysql<");
+        return;
+    }
+
+    //查看索引
+    else if (lowerCommand.startsWith("show indexes from")) {
+        QString tableName = command.mid(18).trimmed();
+        if (tableName.endsWith(';')) {
+            tableName.chop(1); // 去除末尾分号
+        }
+
+        if (tableName.isEmpty()) {
+            dialogEdit->append("ERROR: Table name missing in SHOW INDEXES");
+        } else {
             if (dataBase.isEmpty()) {
                 dialogEdit->append("ERROR: No database selected.");
             } else {
-                QString dbName = dataBase;
-
-                if (!userDatabases.contains(dbName)) {
-                    dialogEdit->append("ERROR: Database '" + dbName + "' does not exist.");
+                QDatabase* db = userDatabases.value(dataBase, nullptr);
+                if (!db || !db->hasTable(tableName)) {
+                    dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
                 } else {
-                    QDatabase* db = userDatabases[dbName];
-                    if (!db->hasTable(tableName)) {
-                        dialogEdit->append("ERROR: Table '" + tableName + "' does not exist.");
+                    Table* table = db->getTable(tableName);
+                    const QMap<QString, QString>& indexMap = table->getIndexMap();  // 你要新增这个接口
+
+                    if (indexMap.isEmpty()) {
+                        dialogEdit->append("No indexes found on table '" + tableName + "'.");
                     } else {
-                        bool success = db->dropIndex(tableName, indexName); // 调用删除索引方法
-                        if (success) {
-                            dialogEdit->append("Query OK, index dropped.");
-                        } else {
-                            dialogEdit->append("ERROR: Index does not exist.");
+                        dialogEdit->append("Indexes on table '" + tableName + "':");
+                        for (auto it = indexMap.begin(); it != indexMap.end(); ++it) {
+                            dialogEdit->append("  Index: " + it.key() + " on field: " + it.value());
                         }
                     }
                 }
             }
-        } catch (const SqlException& ex) {
-            dialogEdit->append("SQL ERROR: " + QString::fromStdString(ex.what()));
         }
 
         QTextCursor cursor = dialogEdit->textCursor();
@@ -1059,6 +1172,8 @@ void mainwindow::processDDL()
         dialogEdit->append("mysql<");
         return;
     }
+
+
 
 
     //插入数据
@@ -1105,8 +1220,7 @@ void mainwindow::processDDL()
 
         insertIntoTable(dataBase, tableName, tuples);
         dialogEdit->append("Query OK, 1 row affected");
-    }
-    else {
+    } else {
         dialogEdit->append("ERROR: Unsupported SQL command");
         QTextCursor cursor = dialogEdit->textCursor();
         cursor.movePosition(QTextCursor::End);

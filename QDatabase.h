@@ -22,6 +22,7 @@ public:
     bool createIndex(const QString& tableName, const QString& indexName, const QString& fieldName);
     bool hasIndex(const QString& tableName, const QString& indexName) const;
     bool dropIndex(const QString& tableName, const QString& indexName);
+    void addTable(const QString& tableName, Table* table);
     // ===============================================================
 
     ~QDatabase();
@@ -29,6 +30,8 @@ public:
 private:
     QString name;
     QMap<QString, Table*> tables;
+
+    QString userName;  // 用户名作为类成员变量
 };
 
 #endif // QDATABASE_H

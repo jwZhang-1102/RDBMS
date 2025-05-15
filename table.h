@@ -17,6 +17,10 @@ public:
                    const QList<QPair<QString, QString>>& columns,
                    QObject* parent = nullptr);
 
+    explicit Table(const QString& name,
+                   const QStringList& columns,
+                   QObject* parent = nullptr);
+
     void insert(const QVariantMap& data);
     QList<QVariantMap> selectAll() const;
 
@@ -25,6 +29,7 @@ public:
     bool hasIndex(const QString& indexName) const;
     void dropIndex(const QString& indexName);
     QString indexField(const QString& indexName) const;
+    const QMap<QString, QString>& getIndexMap() const { return indices; }
     // ===============================================================
 
 private:
