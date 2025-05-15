@@ -1,12 +1,11 @@
-#include "widget.h"
-#include "logui.h"
+#include "mainwindow.h"
+
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    LogUI *log = new LogUI();
-    log->show();
+    MainWindow w;
+    w.show();
     return a.exec();
 }

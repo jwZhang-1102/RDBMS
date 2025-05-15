@@ -1,59 +1,45 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-#include <QWidget>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QLabel>
-#include <QMenu>
-#include <QMenuBar>
-#include <QTreeWidgetItem>
-#include <QKeyEvent>
 
-class mainwindow : public QWidget
-{
+#include <QMainWindow>
+#include <QSplitter>
+
+class QTextEdit;
+class QTableView;
+class QPushButton;
+class QLabel;
+class DBClient;
+
+class MainWindow : public QMainWindow {
     Q_OBJECT
-
 public:
-    mainwindow(const QString &username, QWidget *parent = nullptr);
-    ~mainwindow();
-    void setupInLeftWidget(QWidget *leftWidget);
-    void createDataBase(QString dbName);
-    void createEmptyTable(QString dbName, QString tableName);
-    void createTable(QString dbName, QString tableName, QStringList attributes);
-    void setupInRightWidget(QWidget *rightWidget);
-    void insertAttribute(QString dbName, QString tableName, QStringList attributes);
-    void alterAttribute(QString dbName, QString tableName, QString attribute);
-    void deleteAttribute(QString dbName, QString tableName, QString attribute);
-    void insertIntoTable(QString dbName, QString tableName, QStringList tuples);
-    void showTable(QString dbName, QString tableName);
-    void dropDataBase(QString dbName);
-    void dropTableTEST(QString dbName, QString tableName);
-    void processDDL();
-    void useDatabase(QString database);
-
-    QString userName;
-    QString dataBase;
+    explicit MainWindow(QWidget *parent = nullptr);
 
 private slots:
-    void onTextChanged();
-    void onTreeItemClicked(QTreeWidgetItem *item, int column);
-    void onRefreshButtonClicked();
+    void executeQuery();
+    void showConnectionDialog();
+    void handleQueryResult(const QJsonDocument& result);
+    void handleError(const QString& error);
+    void updateConnectionStatus(bool connected);
+
+    // 日志和备份
+    void restoreBackup();
+    void viewLog();
 
 private:
-    QStringList databases;// = {"testDataBase"};
-    QStringList tables;// = {"testTable"};
+    void setupUI();
+    void setupConnections();
 
-    QStringList attributes;
-    QStringList attributesToDelete;
+    // UI Components
+    QTextEdit* m_sqlEditor;
+    QTableView* m_resultView;
+    QPushButton* m_executeBtn;
+    QLabel* m_statusLabel;
+    QPushButton* m_restoreBtn;
+    QPushButton* m_viewLogBtn;
 
-    QWidget *leftWidget;
-    QWidget *rightWidget;
-
-    int rowNum = 0;
-    int columnNum = 0;
-    QStringList columnNames = {"ID", "Name", "Salary", "DOB","Position"};
-
-    QPushButton *refreshButton;
+    // Core
+    DBClient* m_dbClient;
 };
 
 #endif // MAINWINDOW_H
