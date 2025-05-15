@@ -19,6 +19,11 @@ public:
     static QString parseUseDatabase(const QString& sql);    // 选择数据库
     static QString parseDropDatabase(const QString& sql);  // 删除数据库
     static QString parseDropTable(const QString& sql);      // 删除表
+
+    // 新增备份恢复和日志相关解析方法
+    static QString parseBackupDatabase(const QString& sql);
+    static QString parseRestoreDatabase(const QString& sql);
+    static bool parseShowLog(const QString& sql);
 };
 
 #endif // SQLPARSER_H

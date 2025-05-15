@@ -45,7 +45,7 @@ QString SqlParser::parseUseDatabase(const QString& sql) {
     QRegularExpression regex(
         "USE\\s+DATABASE\\s+(\\w+)",
         QRegularExpression::CaseInsensitiveOption
-    );
+        );
 
     QRegularExpressionMatch match = regex.match(sql);
     if (!match.hasMatch()) {
@@ -54,31 +54,69 @@ QString SqlParser::parseUseDatabase(const QString& sql) {
     return match.captured(1);
 }
 
-// 删除数据库
+// 完善DROP DATABASE解析
 QString SqlParser::parseDropDatabase(const QString& sql) {
     QRegularExpression regex(
-        "DROP\\s+DATABASE\\s+(\\w+)",
+        R"(DROP\s+DATABASE\s+(\w+)\s*;?)",
         QRegularExpression::CaseInsensitiveOption
-    );
+        );
 
     QRegularExpressionMatch match = regex.match(sql);
     if (!match.hasMatch()) {
         throw SqlException("Invalid DROP DATABASE syntax");
     }
-    return match.captured(1);
+    return match.captured(1).trimmed();
 }
 
-// 删除表
+// 完善DROP TABLE解析
 QString SqlParser::parseDropTable(const QString& sql) {
     QRegularExpression regex(
-        "DROP\\s+TABLE\\s+(\\w+)",
+        R"(DROP\s+TABLE\s+(\w+)\s*;?)",
         QRegularExpression::CaseInsensitiveOption
-    );
+        );
 
     QRegularExpressionMatch match = regex.match(sql);
     if (!match.hasMatch()) {
         throw SqlException("Invalid DROP TABLE syntax");
     }
-    return match.captured(1);
+    return match.captured(1).trimmed();
 }
+
+// 新增备份命令解析
+QString SqlParser::parseBackupDatabase(const QString& sql) {
+    QRegularExpression regex(
+        R"(BACKUP\s+DATABASE\s+(\w+)\s*;?)",
+        QRegularExpression::CaseInsensitiveOption
+        );
+
+    QRegularExpressionMatch match = regex.match(sql);
+    if (!match.hasMatch()) {
+        throw SqlException("Invalid BACKUP syntax. Usage: BACKUP DATABASE <dbname>");
+    }
+    return match.captured(1).trimmed();
+}
+
+// 新增恢复命令解析
+QString SqlParser::parseRestoreDatabase(const QString& sql) {
+    QRegularExpression regex(
+        R"(RESTORE\s+DATABASE\s+(\w+)\s*;?)",
+        QRegularExpression::CaseInsensitiveOption
+        );
+
+    QRegularExpressionMatch match = regex.match(sql);
+    if (!match.hasMatch()) {
+        throw SqlException("Invalid RESTORE syntax. Usage: RESTORE DATABASE <dbname>");
+    }
+    return match.captured(1).trimmed();
+}
+
+// 新增查看日志命令解析
+bool SqlParser::parseShowLog(const QString& sql) {
+    QRegularExpression regex(
+        R"(SHOW_LOG\s*;?)", // 匹配SHOW_LOG或SHOW_LOG;
+        QRegularExpression::CaseInsensitiveOption
+        );
+    return regex.match(sql).hasMatch();
+}
+
 
