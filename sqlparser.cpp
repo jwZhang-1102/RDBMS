@@ -82,3 +82,21 @@ QString SqlParser::parseDropTable(const QString& sql) {
     return match.captured(1);
 }
 
+// ======================== [索引功能新增] ========================
+CreateIndexStatement SqlParser::parseCreateIndex(const QString& sql) {
+    QRegularExpression regex(R"(create\s+index\s+(\w+)\s+on\s+(\w+)\s*\(\s*(\w+)\s*\))",
+                             QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = regex.match(sql.trimmed());
+
+    if (!match.hasMatch()) {
+        throw SqlException("Invalid CREATE INDEX syntax");
+    }
+
+    CreateIndexStatement stmt;
+    stmt.indexName = match.captured(1);
+    stmt.tableName = match.captured(2);
+    stmt.fieldName = match.captured(3);
+    return stmt;
+}
+
+// ===============================================================

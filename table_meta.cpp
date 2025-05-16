@@ -1,5 +1,6 @@
 // table_meta.cpp
 #include "table_meta.h"
+#include <algorithm>
 
 TableMeta::TableMeta(const string& name, const vector<Column>& cols)
     : table_name(name), columns(cols) {

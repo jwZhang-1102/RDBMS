@@ -1,4 +1,6 @@
-#include "Database1.h"
+#include "database.h"
+#include <cstdio>
+#include <cstring>
 
 /**
  * 根据表名查找表

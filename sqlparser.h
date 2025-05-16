@@ -10,6 +10,14 @@ struct CreateTableStatement {
     QList<QPair<QString, QString>> columns;
 };
 
+// ======================== [索引功能新增] ========================
+struct CreateIndexStatement {
+    QString indexName;
+    QString tableName;
+    QString fieldName;
+};
+// ===============================================================
+
 class SqlParser {
 public:
     // 原有方法
@@ -19,6 +27,10 @@ public:
     static QString parseUseDatabase(const QString& sql);    // 选择数据库
     static QString parseDropDatabase(const QString& sql);  // 删除数据库
     static QString parseDropTable(const QString& sql);      // 删除表
+
+    // ======================== [索引功能新增] ========================
+    static CreateIndexStatement parseCreateIndex(const QString& sql);
+    // ===============================================================
 };
 
 #endif // SQLPARSER_H
